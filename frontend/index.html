@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scientific Calculator</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="calculator">
+        <div class="display">
+            <div class="expression"></div>
+            <div class="result"></div>
+        </div>
+        <div class="mode-selector">
+            <button id="deg">DEG</button>
+            <button id="rad">RAD</button>
+        </div>
+        <div class="buttons">
+            <!-- Memory functions -->
+            <div class="memory-row">
+                <button class="memory" data-action="MC">MC</button>
+                <button class="memory" data-action="MR">MR</button>
+                <button class="memory" data-action="MS">MS</button>
+                <button class="memory" data-action="M+">M+</button>
+                <button class="memory" data-action="M-">M-</button>
+            </div>
+            <!-- Trigonometric functions -->
+            <div class="trig-row">
+                <button class="trig" data-action="sin">sin</button>
+                <button class="trig" data-action="cos">cos</button>
+                <button class="trig" data-action="tan">tan</button>
+                <button class="trig" data-action="asin">asin</button>
+                <button class="trig" data-action="acos">acos</button>
+                <button class="trig" data-action="atan">atan</button>
+            </div>
+            <!-- Logarithmic and exponential -->
+            <div class="log-row">
+                <button class="log" data-action="log">log</button>
+                <button class="log" data-action="ln">ln</button>
+                <button class="log" data-action="exp">e^x</button>
+                <button class="log" data-action="10^x">10^x</button>
+            </div>
+            <!-- Powers and roots -->
+            <div class="power-row">
+                <button class="power" data-action="^">x^y</button>
+                <button class="power" data-action="sqrt">√</button>
+                <button class="power" data-action="cbrt">∛</button>
+                <button class="power" data-action="nthroot">y√x</button>
+            </div>
+            <!-- Basic arithmetic -->
+            <div class="basic-row">
+                <button class="number" data-action="7">7</button>
+                <button class="number" data-action="8">8</button>
+                <button class="number" data-action="9">9</button>
+                <button class="operator" data-action="/">÷</button>
+                <button class="clear" data-action="clear">C</button>
+            </div>
+            <div class="basic-row">
+                <button class="number" data-action="4">4</button>
+                <button class="number" data-action="5">5</button>
+                <button class="number" data-action="6">6</button>
+                <button class="operator" data-action="*">×</button>
+                <button class="backspace" data-action="backspace">⌫</button>
+            </div>
+            <div class="basic-row">
+                <button class="number" data-action="1">1</button>
+                <button class="number" data-action="2">2</button>
+                <button class="number" data-action="3">3</button>
+                <button class="operator" data-action="-">-</button>
+                <button class="equals" data-action="=">=</button>
+            </div>
+            <div class="basic-row">
+                <button class="number" data-action="0">0</button>
+                <button class="decimal" data-action=".">.</button>
+                <button class="pi" data-action="pi">π</button>
+                <button class="operator" data-action="+">+</button>
+                <button class="empty"></button>
+            </div>
+            <!-- Advanced functions -->
+            <div class="advanced-row">
+                <button class="advanced" data-action="factorial">n!</button>
+                <button class="advanced" data-action="abs">|x|</button>
+                <button class="advanced" data-action="mod">mod</button>
+                <button class="advanced" data-action="inv">1/x</button>
+            </div>
+            <!-- Constants -->
+            <div class="constants-row">
+                <button class="constant" data-action="e">e</button>
+                <button class="constant" data-action="phi">φ</button>
+                <button class="constant" data-action="c">c</button>
+                <button class="constant" data-action="g">g</button>
+            </div>
+            <!-- Special modes -->
+            <div class="special-row">
+                <button class="special" data-action="matrix">Matrix</button>
+                <button class="special" data-action="complex">Complex</button>
+                <button class="special" data-action="stats">Stats</button>
+                <button class="special" data-action="calc">Calc</button>
+            </div>
+        </div>
+        <!-- Hidden panels for advanced features -->
+        <div id="matrix-panel" class="panel hidden">
+            <h3>Matrix Operations</h3>
+            <div class="matrix-input">
+                <textarea id="matrix-a" placeholder="Matrix A"></textarea>
+                <textarea id="matrix-b" placeholder="Matrix B"></textarea>
+            </div>
+            <div class="matrix-buttons">
+                <button data-action="add">A + B</button>
+                <button data-action="subtract">A - B</button>
+                <button data-action="multiply">A × B</button>
+                <button data-action="determinant">det(A)</button>
+                <button data-action="inverse">A⁻¹</button>
+                <button data-action="transpose">Aᵀ</button>
+            </div>
+        </div>
+        <div id="complex-panel" class="panel hidden">
+            <h3>Complex Numbers</h3>
+            <input type="text" id="complex-a" placeholder="a + bi">
+            <input type="text" id="complex-b" placeholder="c + di">
+            <div class="complex-buttons">
+                <button data-action="complex-add">+</button>
+                <button data-action="complex-subtract">-</button>
+                <button data-action="complex-multiply">×</button>
+                <button data-action="complex-divide">÷</button>
+                <button data-action="complex-conjugate">conj</button>
+                <button data-action="complex-magnitude">|z|</button>
+            </div>
+        </div>
+        <div id="stats-panel" class="panel hidden">
+            <h3>Statistics</h3>
+            <textarea id="data-input" placeholder="Enter data (comma separated)"></textarea>
+            <div class="stats-buttons">
+                <button data-action="mean">Mean</button>
+                <button data-action="median">Median</button>
+                <button data-action="mode">Mode</button>
+                <button data-action="stddev">Std Dev</button>
+                <button data-action="variance">Variance</button>
+            </div>
+        </div>
+        <div id="calc-panel" class="panel hidden">
+            <h3>Calculus</h3>
+            <input type="text" id="function-input" placeholder="f(x)">
+            <input type="number" id="lower-limit" placeholder="Lower limit">
+            <input type="number" id="upper-limit" placeholder="Upper limit">
+            <div class="calc-buttons">
+                <button data-action="integrate">∫</button>
+                <button data-action="differentiate">d/dx</button>
+            </div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>

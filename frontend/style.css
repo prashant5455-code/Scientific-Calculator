@@ -1,0 +1,281 @@
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+
+.calculator {
+    background: #2c3e50;
+    border-radius: 20px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    padding: 20px;
+    width: 100%;
+    max-width: 800px;
+}
+
+.display {
+    background: #34495e;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+    color: white;
+}
+
+.expression {
+    font-size: 18px;
+    min-height: 24px;
+    margin-bottom: 10px;
+    word-wrap: break-word;
+}
+
+.result {
+    font-size: 32px;
+    font-weight: bold;
+    text-align: right;
+    min-height: 40px;
+}
+
+.mode-selector {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.mode-selector button {
+    background: #3498db;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    margin: 0 5px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.mode-selector button.active {
+    background: #2980b9;
+}
+
+.buttons {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+}
+
+button {
+    padding: 15px;
+    font-size: 16px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: #34495e;
+    color: white;
+}
+
+button:hover {
+    background: #3d566e;
+    transform: translateY(-2px);
+}
+
+button:active {
+    transform: translateY(0);
+}
+
+.memory-row, .trig-row, .log-row, .power-row, .advanced-row, .constants-row, .special-row {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.basic-row {
+    display: contents;
+}
+
+.memory {
+    background: #9b59b6;
+}
+
+.memory:hover {
+    background: #8e44ad;
+}
+
+.trig {
+    background: #e74c3c;
+}
+
+.trig:hover {
+    background: #c0392b;
+}
+
+.log {
+    background: #f39c12;
+}
+
+.log:hover {
+    background: #e67e22;
+}
+
+.power {
+    background: #27ae60;
+}
+
+.power:hover {
+    background: #229954;
+}
+
+.advanced {
+    background: #16a085;
+}
+
+.advanced:hover {
+    background: #138f7a;
+}
+
+.constants {
+    background: #8e44ad;
+}
+
+.constants:hover {
+    background: #7d3c98;
+}
+
+.special {
+    background: #d35400;
+}
+
+.special:hover {
+    background: #e74c3c;
+}
+
+.number {
+    background: #34495e;
+}
+
+.operator {
+    background: #e67e22;
+}
+
+.operator:hover {
+    background: #d35400;
+}
+
+.equals {
+    background: #27ae60;
+    grid-row: span 2;
+}
+
+.equals:hover {
+    background: #229954;
+}
+
+.clear {
+    background: #e74c3c;
+}
+
+.clear:hover {
+    background: #c0392b;
+}
+
+.backspace {
+    background: #95a5a6;
+}
+
+.backspace:hover {
+    background: #7f8c8d;
+}
+
+.empty {
+    background: transparent;
+    border: none;
+    cursor: default;
+}
+
+.empty:hover {
+    background: transparent;
+    transform: none;
+}
+
+.panel {
+    background: #34495e;
+    border-radius: 10px;
+    padding: 20px;
+    margin-top: 20px;
+    color: white;
+}
+
+.panel.hidden {
+    display: none;
+}
+
+.panel h3 {
+    margin-top: 0;
+    color: #3498db;
+}
+
+.matrix-input, .complex-buttons, .stats-buttons, .calc-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 10px 0;
+}
+
+textarea, input[type="text"], input[type="number"] {
+    background: #2c3e50;
+    border: 1px solid #34495e;
+    border-radius: 5px;
+    color: white;
+    padding: 10px;
+    font-size: 14px;
+}
+
+textarea {
+    width: 100%;
+    min-height: 100px;
+    resize: vertical;
+}
+
+input[type="text"], input[type="number"] {
+    flex: 1;
+    min-width: 150px;
+}
+
+.panel button {
+    background: #3498db;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.panel button:hover {
+    background: #2980b9;
+}
+
+@media (max-width: 600px) {
+    .calculator {
+        padding: 10px;
+    }
+    
+    .buttons {
+        grid-template-columns: repeat(4, 1fr);
+    }
+    
+    .memory-row, .trig-row, .log-row, .power-row, .advanced-row, .constants-row, .special-row {
+        grid-template-columns: repeat(4, 1fr);
+    }
+    
+    button {
+        padding: 12px;
+        font-size: 14px;
+    }
+}

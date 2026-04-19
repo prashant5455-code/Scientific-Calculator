@@ -9,6 +9,7 @@ class ScientificCalculator {
         this.memory = 0;
         this.angleMode = 'deg'; // 'deg' or 'rad'
         this.activePanel = null;
+        this.apiBase = 'http://localhost:3001/api';
         
         this.init();
     }
@@ -16,6 +17,20 @@ class ScientificCalculator {
     init() {
         this.bindEvents();
         this.updateDisplay();
+        this.checkBackendConnection();
+    }
+
+    async checkBackendConnection() {
+        try {
+            const response = await fetch(`${this.apiBase}/health`);
+            if (response.ok) {
+                console.log('Backend connected successfully');
+            } else {
+                console.warn('Backend connection failed, falling back to client-side calculations');
+            }
+        } catch (error) {
+            console.warn('Backend not available, using client-side calculations');
+        }
     }
 
     bindEvents() {
@@ -89,41 +104,47 @@ class ScientificCalculator {
             case 'add':
             case 'subtract':
             case 'multiply':
-                this.matrixOperation(action);
-                break;
             case 'determinant':
-                this.matrixDeterminant();
-                break;
             case 'inverse':
-                this.matrixInverse();
-                break;
             case 'transpose':
-                this.matrixTranspose();
+            case 'eigenvalues':
+            case 'eigenvectors':
+            case 'rank':
+            case 'trace':
+                this.matrixOperation(action);
                 break;
             case 'complex-add':
             case 'complex-subtract':
             case 'complex-multiply':
             case 'complex-divide':
-                this.complexOperation(action);
-                break;
             case 'complex-conjugate':
-                this.complexConjugate();
-                break;
             case 'complex-magnitude':
-                this.complexMagnitude();
+            case 'complex-argument':
+            case 'complex-sqrt':
+            case 'complex-exp':
+            case 'complex-log':
+            case 'complex-sin':
+            case 'complex-cos':
+            case 'complex-tan':
+                this.complexOperation(action);
                 break;
             case 'mean':
             case 'median':
             case 'mode':
-            case 'stddev':
+            case 'std':
             case 'variance':
+            case 'min':
+            case 'max':
+            case 'range':
+            case 'sum':
+            case 'product':
+            case 'quantile':
                 this.statisticOperation(action);
                 break;
             case 'integrate':
-                this.integrate();
-                break;
             case 'differentiate':
-                this.differentiate();
+            case 'limit':
+                this.calculusOperation(action);
                 break;
         }
     }
@@ -156,7 +177,34 @@ class ScientificCalculator {
         this.updateDisplay();
     }
 
-    calculate() {
+    async calculate() {
+        try {
+            const response = await fetch(`${this.apiBase}/calculate`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    expression: this.currentExpression,
+                    angleMode: this.angleMode
+                })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                this.previousResult = data.result;
+                this.display.result.textContent = this.formatResult(data.result);
+            } else {
+                // Fallback to client-side calculation
+                this.fallbackCalculate();
+            }
+        } catch (error) {
+            // Fallback to client-side calculation
+            this.fallbackCalculate();
+        }
+    }
+
+    fallbackCalculate() {
         try {
             let expression = this.currentExpression;
             
@@ -251,16 +299,168 @@ class ScientificCalculator {
         }
     }
 
-    // Matrix operations
-    matrixOperation(operation) {
+    // Matrix operations using backend
+    async matrixOperation(operation) {
         const matrixA = this.parseMatrix(document.getElementById('matrix-a').value);
-        const matrixB = this.parseMatrix(document.getElementById('matrix-b').value);
+        const matrixB = operation !== 'determinant' && operation !== 'inverse' && operation !== 'transpose' && operation !== 'eigenvalues' && operation !== 'eigenvectors' && operation !== 'rank' && operation !== 'trace' 
+            ? this.parseMatrix(document.getElementById('matrix-b').value) 
+            : null;
         
-        if (!matrixA || !matrixB) {
+        if (!matrixA || (matrixB === null && this.needsMatrixB(operation))) {
             alert('Invalid matrix format');
             return;
         }
         
+        try {
+            const response = await fetch(`${this.apiBase}/matrix/operation`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    operation,
+                    matrixA,
+                    matrixB
+                })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                this.display.result.textContent = this.formatMatrix(data.result);
+            } else {
+                // Fallback to client-side
+                this.fallbackMatrixOperation(operation, matrixA, matrixB);
+            }
+        } catch (error) {
+            // Fallback to client-side
+            this.fallbackMatrixOperation(operation, matrixA, matrixB);
+        }
+    }
+
+    needsMatrixB(operation) {
+        return ['add', 'subtract', 'multiply'].includes(operation);
+    }
+
+    // Complex number operations using backend
+    async complexOperation(operation) {
+        const complexA = this.parseComplex(document.getElementById('complex-a').value);
+        const complexB = operation !== 'complex-conjugate' && operation !== 'complex-magnitude' && operation !== 'complex-argument' && operation !== 'complex-sqrt' && operation !== 'complex-exp' && operation !== 'complex-log' && operation !== 'complex-sin' && operation !== 'complex-cos' && operation !== 'complex-tan'
+            ? this.parseComplex(document.getElementById('complex-b').value)
+            : null;
+        
+        if (!complexA || (complexB === null && this.needsComplexB(operation))) {
+            alert('Invalid complex number format');
+            return;
+        }
+        
+        try {
+            const response = await fetch(`${this.apiBase}/complex/operation`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    operation: operation.replace('complex-', ''),
+                    complexA,
+                    complexB
+                })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                this.display.result.textContent = this.formatComplex(data.result);
+            } else {
+                // Fallback to client-side
+                this.fallbackComplexOperation(operation, complexA, complexB);
+            }
+        } catch (error) {
+            // Fallback to client-side
+            this.fallbackComplexOperation(operation, complexA, complexB);
+        }
+    }
+
+    needsComplexB(operation) {
+        return ['complex-add', 'complex-subtract', 'complex-multiply', 'complex-divide'].includes(operation);
+    }
+
+    // Statistics operations using backend
+    async statisticOperation(operation) {
+        const dataText = document.getElementById('data-input').value;
+        const data = dataText.split(',').map(x => x.trim());
+        
+        if (data.length === 0) {
+            alert('No data entered');
+            return;
+        }
+        
+        try {
+            const response = await fetch(`${this.apiBase}/statistics`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    operation,
+                    data
+                })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                this.display.result.textContent = Array.isArray(data.result) ? data.result.join(', ') : data.result;
+            } else {
+                // Fallback to client-side
+                this.fallbackStatisticOperation(operation, data);
+            }
+        } catch (error) {
+            // Fallback to client-side
+            this.fallbackStatisticOperation(operation, data);
+        }
+    }
+
+    // Calculus operations using backend
+    async calculusOperation(operation) {
+        const funcText = document.getElementById('function-input').value;
+        const lower = parseFloat(document.getElementById('lower-limit').value);
+        const upper = parseFloat(document.getElementById('upper-limit').value);
+        const point = parseFloat(document.getElementById('lower-limit').value); // Using lower limit as point for differentiation
+        
+        if (!funcText) {
+            alert('Invalid input');
+            return;
+        }
+        
+        try {
+            const response = await fetch(`${this.apiBase}/calculus`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    operation,
+                    function: funcText,
+                    lowerLimit: lower,
+                    upperLimit: upper,
+                    point: point
+                })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                this.display.result.textContent = data.result;
+            } else {
+                // Fallback to client-side
+                this.fallbackCalculusOperation(operation, funcText, lower, upper, point);
+            }
+        } catch (error) {
+            // Fallback to client-side
+            this.fallbackCalculusOperation(operation, funcText, lower, upper, point);
+        }
+    }
+
+    // Fallback methods for when backend is not available
+    fallbackMatrixOperation(operation, matrixA, matrixB) {
+        // Use existing client-side matrix operations
         let result;
         switch (operation) {
             case 'add':
@@ -272,50 +472,112 @@ class ScientificCalculator {
             case 'multiply':
                 result = this.matrixMultiply(matrixA, matrixB);
                 break;
+            case 'determinant':
+                result = [[this.calculateDeterminant(matrixA)]];
+                break;
+            case 'inverse':
+                result = this.calculateInverse(matrixA);
+                break;
+            case 'transpose':
+                result = this.calculateTranspose(matrixA);
+                break;
+            default:
+                result = null;
         }
         
         if (result) {
             this.display.result.textContent = this.formatMatrix(result);
-        }
-    }
-
-    matrixDeterminant() {
-        const matrix = this.parseMatrix(document.getElementById('matrix-a').value);
-        if (!matrix) {
-            alert('Invalid matrix format');
-            return;
-        }
-        
-        const det = this.calculateDeterminant(matrix);
-        this.display.result.textContent = det;
-    }
-
-    matrixInverse() {
-        const matrix = this.parseMatrix(document.getElementById('matrix-a').value);
-        if (!matrix) {
-            alert('Invalid matrix format');
-            return;
-        }
-        
-        const inverse = this.calculateInverse(matrix);
-        if (inverse) {
-            this.display.result.textContent = this.formatMatrix(inverse);
         } else {
-            this.display.result.textContent = 'Matrix is not invertible';
+            this.display.result.textContent = 'Operation not supported in offline mode';
         }
     }
 
-    matrixTranspose() {
-        const matrix = this.parseMatrix(document.getElementById('matrix-a').value);
-        if (!matrix) {
-            alert('Invalid matrix format');
+    fallbackComplexOperation(operation, complexA, complexB) {
+        // Use existing client-side complex operations
+        let result;
+        const op = operation.replace('complex-', '');
+        
+        switch (op) {
+            case 'add':
+                result = this.complexAdd(complexA, complexB);
+                break;
+            case 'subtract':
+                result = this.complexSubtract(complexA, complexB);
+                break;
+            case 'multiply':
+                result = this.complexMultiply(complexA, complexB);
+                break;
+            case 'divide':
+                result = this.complexDivide(complexA, complexB);
+                break;
+            case 'conjugate':
+                result = { real: complexA.real, imag: -complexA.imag };
+                break;
+            case 'magnitude':
+                result = { real: Math.sqrt(complexA.real * complexA.real + complexA.imag * complexA.imag), imag: 0 };
+                break;
+            default:
+                result = null;
+        }
+        
+        if (result) {
+            this.display.result.textContent = this.formatComplex(result);
+        } else {
+            this.display.result.textContent = 'Operation not supported in offline mode';
+        }
+    }
+
+    fallbackStatisticOperation(operation, data) {
+        const numericData = data.map(x => parseFloat(x)).filter(x => !isNaN(x));
+        if (numericData.length === 0) {
+            alert('No valid data');
             return;
         }
         
-        const transpose = this.calculateTranspose(matrix);
-        this.display.result.textContent = this.formatMatrix(transpose);
+        let result;
+        switch (operation) {
+            case 'mean':
+                result = this.calculateMean(numericData);
+                break;
+            case 'median':
+                result = this.calculateMedian(numericData);
+                break;
+            case 'mode':
+                result = this.calculateMode(numericData);
+                break;
+            case 'std':
+                result = this.calculateStdDev(numericData);
+                break;
+            case 'variance':
+                result = this.calculateVariance(numericData);
+                break;
+            default:
+                result = 'Operation not supported in offline mode';
+        }
+        
+        this.display.result.textContent = result;
     }
 
+    fallbackCalculusOperation(operation, funcText, lower, upper, point) {
+        try {
+            let result;
+            switch (operation) {
+                case 'integrate':
+                    result = this.numericalIntegrate(funcText, lower, upper);
+                    break;
+                case 'differentiate':
+                    result = this.numericalDifferentiate(funcText, point);
+                    break;
+                default:
+                    result = 'Operation not supported in offline mode';
+            }
+            this.display.result.textContent = result;
+        } catch (error) {
+            this.display.result.textContent = 'Calculus error in offline mode';
+        }
+    }
+
+    // Existing helper methods (parseMatrix, formatMatrix, etc.)
     parseMatrix(text) {
         try {
             const rows = text.trim().split('\n');
@@ -326,7 +588,10 @@ class ScientificCalculator {
     }
 
     formatMatrix(matrix) {
-        return matrix.map(row => row.join(' ')).join('\n');
+        if (Array.isArray(matrix) && matrix.length > 0 && Array.isArray(matrix[0])) {
+            return matrix.map(row => row.join(' ')).join('\n');
+        }
+        return matrix;
     }
 
     matrixAdd(a, b) {
@@ -356,7 +621,6 @@ class ScientificCalculator {
     }
 
     calculateDeterminant(matrix) {
-        // Simple implementation for 2x2 and 3x3 matrices
         if (matrix.length === 2 && matrix[0].length === 2) {
             return matrix[0][0] * matrix[1][1] - matrix[0][1] * matrix[1][0];
         }
@@ -370,7 +634,6 @@ class ScientificCalculator {
     }
 
     calculateInverse(matrix) {
-        // Simple implementation for 2x2 matrices
         if (matrix.length === 2 && matrix[0].length === 2) {
             const det = this.calculateDeterminant(matrix);
             if (det === 0) return null;
@@ -379,7 +642,7 @@ class ScientificCalculator {
                 [-matrix[1][0] / det, matrix[0][0] / det]
             ];
         }
-        return null; // Inverse for larger matrices not implemented
+        return null;
     }
 
     calculateTranspose(matrix) {
@@ -395,126 +658,44 @@ class ScientificCalculator {
         return transpose;
     }
 
-    // Complex number operations
-    complexOperation(operation) {
-        const a = this.parseComplex(document.getElementById('complex-a').value);
-        const b = this.parseComplex(document.getElementById('complex-b').value);
-        
-        if (!a || !b) {
-            alert('Invalid complex number format');
-            return;
-        }
-        
-        let result;
-        switch (operation) {
-            case 'complex-add':
-                result = this.complexAdd(a, b);
-                break;
-            case 'complex-subtract':
-                result = this.complexSubtract(a, b);
-                break;
-            case 'complex-multiply':
-                result = this.complexMultiply(a, b);
-                break;
-            case 'complex-divide':
-                result = this.complexDivide(a, b);
-                break;
-        }
-        
-        this.display.result.textContent = this.formatComplex(result);
-    }
-
-    complexConjugate() {
-        const z = this.parseComplex(document.getElementById('complex-a').value);
-        if (!z) {
-            alert('Invalid complex number format');
-            return;
-        }
-        const conjugate = { real: z.real, imag: -z.imag };
-        this.display.result.textContent = this.formatComplex(conjugate);
-    }
-
-    complexMagnitude() {
-        const z = this.parseComplex(document.getElementById('complex-a').value);
-        if (!z) {
-            alert('Invalid complex number format');
-            return;
-        }
-        const magnitude = Math.sqrt(z.real * z.real + z.imag * z.imag);
-        this.display.result.textContent = magnitude;
-    }
-
     parseComplex(text) {
-        // Simple parser for a + bi format
         const match = text.match(/^([+-]?\d*\.?\d+)\s*([+-]\s*\d*\.?\d*)i?$/);
         if (!match) return null;
         
         const real = parseFloat(match[1]);
         const imag = match[2] ? parseFloat(match[2].replace(/\s/g, '')) : 0;
         
-        return { real, imag };
+        return { re: real, im: imag };
     }
 
     formatComplex(z) {
-        if (z.imag === 0) return z.real.toString();
-        if (z.real === 0) return z.imag === 1 ? 'i' : z.imag === -1 ? '-i' : `${z.imag}i`;
-        const sign = z.imag >= 0 ? '+' : '';
-        return `${z.real}${sign}${z.imag === 1 ? '' : z.imag === -1 ? '-' : z.imag}i`;
+        if (z.im === 0) return z.re.toString();
+        if (z.re === 0) return z.im === 1 ? 'i' : z.im === -1 ? '-i' : `${z.im}i`;
+        const sign = z.im >= 0 ? '+' : '';
+        return `${z.re}${sign}${z.im === 1 ? '' : z.im === -1 ? '-' : z.im}i`;
     }
 
     complexAdd(a, b) {
-        return { real: a.real + b.real, imag: a.imag + b.imag };
+        return { re: a.re + b.re, im: a.im + b.im };
     }
 
     complexSubtract(a, b) {
-        return { real: a.real - b.real, imag: a.imag - b.imag };
+        return { re: a.re - b.re, im: a.im - b.im };
     }
 
     complexMultiply(a, b) {
         return {
-            real: a.real * b.real - a.imag * b.imag,
-            imag: a.real * b.imag + a.imag * b.real
+            re: a.re * b.re - a.im * b.im,
+            im: a.re * b.im + a.im * b.re
         };
     }
 
     complexDivide(a, b) {
-        const denominator = b.real * b.real + b.imag * b.imag;
+        const denominator = b.re * b.re + b.im * b.im;
         return {
-            real: (a.real * b.real + a.imag * b.imag) / denominator,
-            imag: (a.imag * b.real - a.real * b.imag) / denominator
+            re: (a.re * b.re + a.im * b.im) / denominator,
+            im: (a.im * b.re - a.re * b.im) / denominator
         };
-    }
-
-    // Statistics operations
-    statisticOperation(operation) {
-        const dataText = document.getElementById('data-input').value;
-        const data = dataText.split(',').map(x => parseFloat(x.trim())).filter(x => !isNaN(x));
-        
-        if (data.length === 0) {
-            alert('No valid data entered');
-            return;
-        }
-        
-        let result;
-        switch (operation) {
-            case 'mean':
-                result = this.calculateMean(data);
-                break;
-            case 'median':
-                result = this.calculateMedian(data);
-                break;
-            case 'mode':
-                result = this.calculateMode(data);
-                break;
-            case 'stddev':
-                result = this.calculateStdDev(data);
-                break;
-            case 'variance':
-                result = this.calculateVariance(data);
-                break;
-        }
-        
-        this.display.result.textContent = result;
     }
 
     calculateMean(data) {
@@ -544,44 +725,7 @@ class ScientificCalculator {
         return Math.sqrt(this.calculateVariance(data));
     }
 
-    // Calculus operations
-    integrate() {
-        const funcText = document.getElementById('function-input').value;
-        const lower = parseFloat(document.getElementById('lower-limit').value);
-        const upper = parseFloat(document.getElementById('upper-limit').value);
-        
-        if (!funcText || isNaN(lower) || isNaN(upper)) {
-            alert('Invalid input');
-            return;
-        }
-        
-        try {
-            const result = this.numericalIntegrate(funcText, lower, upper);
-            this.display.result.textContent = result;
-        } catch (error) {
-            this.display.result.textContent = 'Integration error';
-        }
-    }
-
-    differentiate() {
-        const funcText = document.getElementById('function-input').value;
-        const point = parseFloat(document.getElementById('lower-limit').value);
-        
-        if (!funcText || isNaN(point)) {
-            alert('Invalid input');
-            return;
-        }
-        
-        try {
-            const result = this.numericalDifferentiate(funcText, point);
-            this.display.result.textContent = result;
-        } catch (error) {
-            this.display.result.textContent = 'Differentiation error';
-        }
-    }
-
     numericalIntegrate(funcText, a, b, n = 1000) {
-        // Trapezoidal rule
         const h = (b - a) / n;
         let sum = 0;
         
@@ -599,16 +743,13 @@ class ScientificCalculator {
     }
 
     numericalDifferentiate(funcText, x, h = 0.0001) {
-        // Central difference
         const f = (val) => this.evaluateFunction(funcText, val);
         return (f(x + h) - f(x - h)) / (2 * h);
     }
 
     evaluateFunction(funcText, x) {
-        // Replace x with the value
         let expression = funcText.replace(/x/g, `(${x})`);
         
-        // Add trigonometric functions
         expression = expression.replace(/sin\(/g, `Math.sin(${this.angleMode === 'deg' ? '(Math.PI/180)*' : ''}`);
         expression = expression.replace(/cos\(/g, `Math.cos(${this.angleMode === 'deg' ? '(Math.PI/180)*' : ''}`);
         expression = expression.replace(/tan\(/g, `Math.tan(${this.angleMode === 'deg' ? '(Math.PI/180)*' : ''}`);
